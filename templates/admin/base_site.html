@@ -1,0 +1,15 @@
+{% extends "admin/base.html" %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">记账簿管理后台</a>
+</h1>
+{% endblock %}
+
+{% block nav-global %}
+<div style="float: right; padding: 15px;">
+    <a href="{% url 'my_form' %}" class="btn" style="background-color: #417690; color: white; text-decoration: none; padding: 8px 15px; border-radius: 4px;">
+        返回首页
+    </a>
+</div>
+{% endblock %} 
