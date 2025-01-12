@@ -45,6 +45,12 @@
         <div class="form-container">
             <h2 class="form-title">记账簿</h2>
             <form method="post">
+                <div class="text-center mt-3">
+                    <a href="{% url 'import_excel' %}" class="btn btn-secondary">导入Excel数据</a>
+                    <a href="{% url 'query_transactions' %}" class="btn btn-info">查询统计</a>
+                    <a href="{% url 'admin:index' %}" class="btn btn-dark">后台管理</a>
+                </div>
+                <br>
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="id_transaction_date" class="form-label">交易日期:</label>
@@ -105,11 +111,6 @@
                 <button type="submit" class="btn btn-primary btn-submit">提交</button>
             </form>
 
-            <div class="text-center mt-3">
-                <a href="{% url 'import_excel' %}" class="btn btn-secondary">导入Excel数据</a>
-                <a href="{% url 'query_transactions' %}" class="btn btn-info">查询统计</a>
-                <a href="{% url 'admin:index' %}" class="btn btn-dark">后台管理</a>
-            </div>
         </div>
     </div>
 

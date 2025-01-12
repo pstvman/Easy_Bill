@@ -73,8 +73,18 @@
                     <table class="table table-striped">
                         <thead>
                             <tr>
-                                <th>日期</th>
-                                <th>金额</th>
+                                <th>
+                                    <a href="?{{ request.GET.urlencode }}&sort={% if sort == 'transaction_date' %}-{% endif %}transaction_date" class="text-dark text-decoration-none">
+                                        日期
+                                        {% if sort == 'transaction_date' %}↑{% elif sort == '-transaction_date' %}↓{% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?{{ request.GET.urlencode }}&sort={% if sort == 'amount' %}-{% endif %}amount" class="text-dark text-decoration-none">
+                                        金额
+                                        {% if sort == 'amount' %}↑{% elif sort == '-amount' %}↓{% endif %}
+                                    </a>
+                                </th>
                                 <th>类别</th>
                                 <th>描述</th>
                                 <th>支付方式</th>

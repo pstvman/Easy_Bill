@@ -104,6 +104,9 @@ def query_transactions(request):
     form = TransactionQueryForm(request.GET)
     transactions = Transaction.objects.all()
     
+    # 获取排序参数
+    sort = request.GET.get('sort', '-transaction_date')  # 默认按日期降序
+
     if form.is_valid():
         # 支付方式过滤
         if form.cleaned_data['payment_method']:
@@ -161,6 +164,8 @@ def query_transactions(request):
             
             elif date_range == 'last_year':
                 transactions = transactions.filter(transaction_date__year=today.year - 1)
+        # 添加排序
+        transactions = transactions.order_by(sort)
 
     # 准备图表数据
     # 1. 按类别统计支出
@@ -192,7 +197,8 @@ def query_transactions(request):
     context = {
         'form': form,
         'transactions': transactions,
-        'chart_data_json': json.dumps(chart_data)
+        'chart_data_json': json.dumps(chart_data),
+        'sort': sort
     }
     
     return render(request, 'query.html', context)
