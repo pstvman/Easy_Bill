@@ -12,35 +12,6 @@ from .models import Transaction
 from .forms import TransactionForm, TransactionQueryForm
 
 
-def my_view(request):
-    if request.method == 'POST':
-        form = TransactionForm(request.POST)
-        if form.is_valid():
-            transaction = form.save()
-            messages.success(request, '交易记录已成功保存！')
-
-            # 保存上一次提交的数据到session
-            request.session['transaction_data'] = {
-                'transaction_date': request.POST.get('transaction_date'),
-                'category': request.POST.get('category_code'),
-                'payment': request.POST.get('payment_method'),
-            }
-
-            return redirect('success')
-    else:
-        # 从session获取上次的数据
-        transaction_data = request.session.get('transaction_data', {})
-        initial_data = {
-            'transaction_date': transaction_data.get('transaction_date'),
-            'category_code': transaction_data.get('category'),
-            'payment_method': transaction_data.get('payment'),
-        }
-        form = TransactionForm(initial=initial_data)
-    return render(request, 'record.html', {
-        'form': form,
-        'transaction_data': request.session.get('transaction_data', {})
-        })
-
 def home(request):
     # 获取最近的10条记录
     recent_transactions = Transaction.objects.all().order_by('-transaction_date')[:10]
@@ -74,7 +45,7 @@ def add_transaction(request):
                 'payment': request.POST.get('payment_method'),
             }
             
-            return redirect('success')
+            return render(request, 'success.html')
     else:
         transaction_data = request.session.get('transaction_data', {})
         initial_data = {

@@ -1,4 +1,3 @@
-<!-- my_template.html -->
 <!DOCTYPE html>
 <html lang="zh">
 <head>
@@ -22,7 +21,7 @@
     </style>
 </head>
 <body>
-    <form method="post">
+    <form method="post" action="{% url 'add_transaction' %}">
         {% csrf_token %}
         <div class="form-group">
             <label for="id_transaction_date" class="form-label">交易日期:</label>
