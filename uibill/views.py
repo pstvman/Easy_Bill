@@ -18,10 +18,28 @@ def my_view(request):
         if form.is_valid():
             transaction = form.save()
             messages.success(request, '交易记录已成功保存！')
+
+            # 保存上一次提交的数据到session
+            request.session['transaction_data'] = {
+                'transaction_date': request.POST.get('transaction_date'),
+                'category': request.POST.get('category_code'),
+                'payment': request.POST.get('payment_method'),
+            }
+
             return redirect('success')
     else:
-        form = TransactionForm()
-    return render(request, 'record.html', {'form': form})
+        # 从session获取上次的数据
+        transaction_data = request.session.get('transaction_data', {})
+        initial_data = {
+            'transaction_date': transaction_data.get('transaction_date'),
+            'category_code': transaction_data.get('category'),
+            'payment_method': transaction_data.get('payment'),
+        }
+        form = TransactionForm(initial=initial_data)
+    return render(request, 'record.html', {
+        'form': form,
+        'transaction_data': request.session.get('transaction_data', {})
+        })
 
 def home(request):
     return render(request, 'home.html')

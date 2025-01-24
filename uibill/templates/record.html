@@ -54,9 +54,16 @@
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="id_transaction_date" class="form-label">交易日期:</label>
-                    <input type="date" name="transaction_date" class="form-control" id="id_transaction_date" required>
+                    <!-- <input type="date" name="transaction_date" class="form-control" id="id_transaction_date" required> -->
+                    <input type="date" name="transaction_date" class="form-control" id="id_transaction_date" 
+                           value="{{ form.transaction_date.value|default:'' }}" required>
                 </div>
-                
+
+                <div class="form-group">
+                    <label for="id_description" class="form-label">描述:</label>
+                    <input type="text" name="description" class="form-control" id="id_description" required>
+                </div>
+
                 <div class="form-group">
                     <label for="id_amount" class="form-label">金额:</label>
                     <div class="input-group">
@@ -67,44 +74,28 @@
 
                 <div class="form-group">
                     <label for="id_category_code" class="form-label">类别:</label>
+                    <!-- <select name="category_code" class="form-select" id="id_category_code" required> -->
                     <select name="category_code" class="form-select" id="id_category_code" required>
                         <option value="">请选择类别</option>
-                        <option value="A">生活</option>
-                        <option value="B">聚餐</option>
-                        <option value="C">烟酒</option>
-                        <option value="D">用品</option>
-                        <option value="E">穿搭</option>
-                        <option value="F">房租</option>
-                        <option value="G">水费</option>
-                        <option value="H">电费</option>
-                        <option value="I">网费</option>
-                        <option value="J">出行</option>
-                        <option value="K">投资</option>
-                        <option value="L">收入</option>
+                        {% for value, label in form.category_code.field.choices %}
+                        <option value="{{ value }}" {% if form.category_code.value == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
                     </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="id_description" class="form-label">描述:</label>
-                    <input type="text" name="description" class="form-control" id="id_description" required>
                 </div>
 
                 <div class="form-group">
                     <label for="id_payment_method" class="form-label">支付方式:</label>
+                    <!-- <select name="payment_method" class="form-select" id="id_payment_method" required> -->
                     <select name="payment_method" class="form-select" id="id_payment_method" required>
                         <option value="">请选择支付方式</option>
-                        <option value="1">微信</option>
-                        <option value="2">支付宝</option>
-                        <option value="3">现金</option>
-                        <option value="4">京东白条</option>
-                        <option value="5">交通银行信用卡</option>
-                        <option value="6">农商行信用卡</option>
-                        <option value="7">其他银行卡</option>
+                        {% for value, label in form.payment_method.field.choices %}
+                        <option value="{{ value }}" {% if form.payment_method.value == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label for="id_order_number" class="form-label">订单编号:</label>
+                    <label for="id_order_number" class="form-label">订单编号[可选]:</label>
                     <input type="text" name="order_number" class="form-control" id="id_order_number">
                 </div>
 
