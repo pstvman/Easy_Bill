@@ -42,11 +42,59 @@ def my_view(request):
         })
 
 def home(request):
-    return render(request, 'home.html')
+    # 获取最近的10条记录
+    recent_transactions = Transaction.objects.all().order_by('-transaction_date')[:10]
+    
+    # 从session获取上次的数据
+    transaction_data = request.session.get('transaction_data', {})
+    initial_data = {
+        'transaction_date': transaction_data.get('transaction_date'),
+        'category_code': transaction_data.get('category'),
+        'payment_method': transaction_data.get('payment'),
+    }
+    form = TransactionForm(initial=initial_data)
+    
+    return render(request, 'home.html', {
+        'form': form,
+        'transaction_data': request.session.get('transaction_data', {}),
+        'recent_transactions': recent_transactions
+    })
 
-# 表格提交成功后执行的跳转
+def add_transaction(request):
+    if request.method == 'POST':
+        form = TransactionForm(request.POST)
+        if form.is_valid():
+            transaction = form.save()
+            messages.success(request, '交易记录已成功保存！')
+            
+            # 保存上一次提交的数据到session
+            request.session['transaction_data'] = {
+                'transaction_date': request.POST.get('transaction_date'),
+                'category': request.POST.get('category_code'),
+                'payment': request.POST.get('payment_method'),
+            }
+            
+            return redirect('success')
+    else:
+        transaction_data = request.session.get('transaction_data', {})
+        initial_data = {
+            'transaction_date': transaction_data.get('transaction_date'),
+            'category_code': transaction_data.get('category'),
+            'payment_method': transaction_data.get('payment'),
+        }
+        form = TransactionForm(initial=initial_data)
+    
+    return render(request, 'record.html', {
+        'form': form,
+        'transaction_data': request.session.get('transaction_data', {})
+    })
+
 def success_view(request):
-    return render(request, 'success.html')
+    # 如果是从iframe中访问的，返回success.html
+    if request.META.get('HTTP_SEC_FETCH_DEST') == 'iframe':
+        return render(request, 'success.html')
+    # 否则重定向到主页
+    return redirect('home')
 
 def import_excel(request):
     if request.method == 'POST' and request.FILES.get('excel_file'):
@@ -88,10 +136,10 @@ def import_excel(request):
                     )
             
             messages.success(request, f'成功导入 {len(df)} 条记录！')
+            return redirect('home')  # 成功后重定向到主页
             
         except Exception as e:
             messages.error(request, f'导入失败：{str(e)}')
-            # 添加详细的错误日志
             print(f"导入错误详情: {str(e)}")
             
     return render(request, 'import_excel.html')
@@ -218,5 +266,9 @@ def query_transactions(request):
         'chart_data_json': json.dumps(chart_data),
         'sort': sort
     }
+    
+    if not form.is_valid():
+        messages.error(request, '查询参数无效')
+        return redirect('home')
     
     return render(request, 'query.html', context)
