@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from .models import Transaction
 from .forms import TransactionForm, TransactionQueryForm
+from django.http import JsonResponse
 
 
 def home(request):
@@ -45,7 +46,10 @@ def add_transaction(request):
                 'payment': request.POST.get('payment_method'),
             }
             
-            return render(request, 'success.html')
+            if request.POST.get('continue') == 'true':
+                return render(request, 'success.html', {'continue_recording': True})
+            return render(request, 'success.html', {'continue_recording': False})
+
     else:
         transaction_data = request.session.get('transaction_data', {})
         initial_data = {

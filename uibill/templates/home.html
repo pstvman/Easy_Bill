@@ -89,5 +89,15 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 检查URL参数是否需要打开模态框
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('open_modal') === 'true') {
+                const modal = new bootstrap.Modal(document.getElementById('recordModal'));
+                modal.show();
+            }
+        });
+    </script>
 </body>
 </html>

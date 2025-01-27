@@ -38,14 +38,14 @@
             seconds--;
             countdownElement.textContent = `${seconds}秒后自动返回`;
             
+            if (seconds <= 2 )
+                // 提交并继续
+                {% if continue_recording %}
+                    window.location.href = '/?open_modal=true';
+                {% endif %}
+
             if (seconds <= 0) {
                 clearInterval(countdown);
-                /*// 获取父窗口中的模态框元素
-                const modal = window.parent.document.getElementById('recordModal');
-                if (modal) {
-                    // 刷新父页面以更新记录列表
-                    window.parent.location.reload();
-                }*/
                 // 直接返回主页
                 window.location.href = '/';
             }
