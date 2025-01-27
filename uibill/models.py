@@ -24,6 +24,7 @@ class Transaction(models.Model):
         ('5', '交通银行信用卡'),
         ('6', '农商行信用卡'),
         ('7', '其他银行卡'),
+        ('8', '美团'),
     ]
 
     transaction_date = models.DateField(verbose_name='交易日期')
