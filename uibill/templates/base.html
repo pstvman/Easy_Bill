@@ -1,0 +1,40 @@
+<!-- 在body结束前添加 -->
+<div class="d-md-none fixed-bottom bg-white border-top py-2 mobile-nav">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col">
+                <a href="{% url 'home' %}" class="text-decoration-none text-muted">
+                    <i class="fas fa-home d-block mb-1"></i>
+                    <small>首页</small>
+                </a>
+            </div>
+            <div class="col">
+                <a href="#" class="text-decoration-none text-muted" data-bs-toggle="modal" data-bs-target="#recordModal">
+                    <i class="fas fa-plus-circle d-block mb-1"></i>
+                    <small>记账</small>
+                </a>
+            </div>
+            <div class="col">
+                <a href="{% url 'query_transactions' %}" class="text-decoration-none text-muted">
+                    <i class="fas fa-chart-pie d-block mb-1"></i>
+                    <small>统计</small>
+                </a>
+            </div>
+            <div class="col">
+                <a href="{% url 'budget_list' %}" class="text-decoration-none text-muted">
+                    <i class="fas fa-wallet d-block mb-1"></i>
+                    <small>预算</small>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 为底部导航添加额外的padding -->
+<style>
+    @media (max-width: 768px) {
+        body {
+            padding-bottom: 60px;
+        }
+    }
+</style>

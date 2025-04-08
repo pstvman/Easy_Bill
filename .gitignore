@@ -1,5 +1,6 @@
 venv/
+migrations/
 *.pyc
-db.sqlite3
+*.sqlite3
 *.log
 .vscode

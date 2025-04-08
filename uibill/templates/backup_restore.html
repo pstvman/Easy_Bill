@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}数据备份与恢复{% endblock %}
+
+{% block page_title %}数据备份与恢复{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'home' %}" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left"></i> 返回首页
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">备份数据</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">
+                    将所有交易记录和预算数据导出为JSON文件，以便日后恢复或迁移到其他设备。
+                </p>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    建议定期备份您的数据，以防数据丢失。
+                </div>
+                
+                <div class="d-grid">
+                    <a href="{% url 'backup_data' %}" class="btn btn-primary">
+                        <i class="fas fa-download me-2"></i> 下载备份文件
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">恢复数据</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">
+                    从备份文件中恢复您的交易记录和预算数据。
+                </p>
+                
+                <div class="alert alert-warning mb-4">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>注意：</strong> 恢复操作可能会覆盖现有数据，请谨慎操作。
+                </div>
+                
+                <form method="post" action="{% url 'restore_data' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="backup_file" class="form-label">选择备份文件</label>
+                        <input type="file" class="form-control" id="backup_file" name="backup_file" accept=".json" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="clear_existing" name="clear_existing" value="yes">
+                            <label class="form-check-label" for="clear_existing">
+                                清除现有数据后恢复（谨慎选择）
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-upload me-2"></i> 恢复数据
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">数据管理提示</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 mb-3 mb-md-0">
+                <div class="d-flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-shield-alt text-primary fs-3 me-3"></i>
+                    </div>
+                    <div>
+                        <h5>安全存储</h5>
+                        <p class="text-muted">将备份文件保存在安全的位置，如云存储或外部硬盘。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3 mb-md-0">
+                <div class="d-flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-calendar-alt text-success fs-3 me-3"></i>
+                    </div>
+                    <div>
+                        <h5>定期备份</h5>
+                        <p class="text-muted">建议每月或在重要数据输入后进行备份。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-sync-alt text-warning fs-3 me-3"></i>
+                    </div>
+                    <div>
+                        <h5>版本控制</h5>
+                        <p class="text-muted">保留多个备份文件，以便在需要时恢复到特定时间点。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,73 +1,65 @@
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>导入Excel数据</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .upload-container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
-            max-width: 600px;
-            margin: 40px auto;
-        }
-        .file-input {
-            margin: 20px 0;
-        }
-    </style>
-</head>
-<body class="bg-light">
-    <div class="container">
-        <div class="upload-container">
-            <h2 class="text-center mb-4">导入Excel数据</h2>
-            
-            {% if messages %}
-            <div class="messages">
-                {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
-                    {{ message }}
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
-            
-            <!-- 在form标签前添加 -->
-            <div class="mb-3">
-                <a href="{% url 'download_template' %}" class="btn btn-outline-primary">下载Excel模板</a>
-            </div>
+{% extends "base.html" %}
 
-            <!-- 在文件上传区域添加提示 -->
-            <div class="alert alert-info" role="alert">
-                <h4 class="alert-heading">Excel文件要求：</h4>
-                <ul>
-                    <li>日期格式：YYYY/MM/DD 或 YYYY-MM-DD</li>
-                    <li>金额必须为数字</li>
-                    <li>类别代码：A-L</li>
-                    <li>支付方式：1-7</li>
-                    <li>空行将被自动跳过</li>
-                </ul>
+{% block title %}批量导入{% endblock %}
+
+{% block page_title %}批量导入交易记录{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'home' %}" class="btn btn-outline-primary">
+    <i class="fas fa-arrow-left"></i> 返回首页
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">上传Excel文件</h5>
             </div>
-
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                <div class="mb-3">
-                    <label for="excel_file" class="form-label">选择Excel文件</label>
-                    <input type="file" class="form-control" id="excel_file" name="excel_file" accept=".xlsx,.xls">
+            <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    <h5 class="alert-heading"><i class="fas fa-info-circle"></i> Excel文件要求</h5>
+                    <ul class="mb-0">
+                        <li>日期格式：YYYY/MM/DD 或 YYYY-MM-DD</li>
+                        <li>金额必须为数字</li>
+                        <li>类别代码：A-M (参考下方模板)</li>
+                        <li>支付方式：WCP, ZFB, CSH等 (参考下方模板)</li>
+                        <li>空行将被自动跳过</li>
+                    </ul>
                 </div>
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary">上传并导入</button>
-                    <a href="{% url 'home' %}" class="btn btn-secondary">返回记账</a>
+                
+                <form method="post" enctype="multipart/form-data" class="mb-4">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="excel_file" class="form-label">选择Excel文件</label>
+                        <input type="file" class="form-control" id="excel_file" name="excel_file" accept=".xlsx,.xls">
+                        <div class="form-text">支持.xlsx和.xls格式</div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> 上传并导入
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center">
+                    <p class="text-muted">不确定格式？下载模板文件</p>
+                    <a href="{% url 'download_template' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-download"></i> 下载Excel模板
+                    </a>
                 </div>
-            </form>
-
-            {% if preview_data %}
-            <div class="mt-4">
-                <h3>数据预览</h3>
+            </div>
+        </div>
+        
+        {% if preview_data %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">数据预览</h5>
+            </div>
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-striped">
+                    <table class="table table-striped mb-0">
                         <thead>
                             <tr>
                                 {% for column in preview_data.columns %}
@@ -87,8 +79,8 @@
                     </table>
                 </div>
             </div>
-            {% endif %}
         </div>
+        {% endif %}
     </div>
-</body>
-</html>
+</div>
+{% endblock %}

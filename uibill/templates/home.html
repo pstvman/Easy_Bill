@@ -1,103 +1,344 @@
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>记账簿</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            padding: 20px;
+{% extends "base.html" %}
+
+{% block title %}记账簿 - 首页{% endblock %}
+
+{% block header_actions %}
+<div class="d-flex gap-2">
+    <a href="{% url 'admin:index' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-cog"></i> 管理
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- 统计卡片 -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="label">本月支出</div>
+                    <i class="fas fa-arrow-down text-danger"></i>
+                </div>
+                <div class="value text-danger">¥{{ monthly_expense|default:"0.00" }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="label">本月收入</div>
+                    <i class="fas fa-arrow-up text-success"></i>
+                </div>
+                <div class="value text-success">¥{{ monthly_income|default:"0.00" }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="label">本月结余</div>
+                    <i class="fas fa-wallet text-primary"></i>
+                </div>
+                <div class="value text-primary">¥{{ monthly_balance|default:"0.00" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 快捷操作 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body d-flex justify-content-center gap-3 flex-wrap">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#recordModal">
+                    <i class="fas fa-plus-circle"></i> 记一笔
+                </button>
+                <a href="{% url 'query_transactions' %}" class="btn btn-info text-white">
+                    <i class="fas fa-chart-pie"></i> 统计分析
+                </a>
+                <a href="{% url 'import_excel' %}" class="btn btn-secondary">
+                    <i class="fas fa-file-import"></i> 批量导入
+                </a>
+                <a href="{% url 'backup_restore' %}" class="btn btn-warning text-dark">
+                    <i class="fas fa-database"></i> 备份/恢复
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 常用交易快捷记账 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">快捷记账</h5>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="editQuickActions">
+                    <i class="fas fa-edit"></i> 编辑
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="row" id="quickActionButtons">
+                    <!-- 快捷按钮将通过JS动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 最近交易记录 -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">最近交易记录</h5>
+        <a href="{% url 'query_transactions' %}" class="btn btn-sm btn-outline-primary">查看更多</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>日期</th>
+                        <th>金额</th>
+                        <th>类别</th>
+                        <th>描述</th>
+                        <th>支付方式</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in recent_transactions %}
+                    <tr>
+                        <td>{{ transaction.transaction_date|date:"Y-m-d" }}</td>
+                        <td class="{% if transaction.category_code == 'L' %}text-success{% else %}text-danger{% endif %}">
+                            {% if transaction.category_code == 'L' %}+{% else %}-{% endif %}¥{{ transaction.amount|floatformat:2 }}
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark">
+                                {{ transaction.get_category_code_display }}
+                            </span>
+                        </td>
+                        <td>{{ transaction.description }}</td>
+                        <td>
+                            <small class="text-muted">{{ transaction.get_payment_method_display }}</small>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-3">暂无交易记录</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 记账模态框 -->
+<div class="modal fade" id="recordModal" tabindex="-1" aria-labelledby="recordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="recordModalLabel">记一笔</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'add_transaction' %}" id="transactionForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_transaction_date" class="form-label">交易日期</label>
+                        <input type="date" name="transaction_date" class="form-control" id="id_transaction_date" 
+                               value="{{ form.transaction_date.value|default:'' }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_amount" class="form-label">金额</label>
+                        <div class="input-group">
+                            <span class="input-group-text">¥</span>
+                            <input type="number" name="amount" class="form-control" id="id_amount" step="0.01" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_category_code" class="form-label">类别</label>
+                        <select name="category_code" class="form-select" id="id_category_code" required>
+                            <option value="">请选择类别</option>
+                            {% for value, label in form.category_code.field.choices %}
+                            <option value="{{ value }}" {% if form.category_code.value == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_description" class="form-label">描述</label>
+                        <input type="text" name="description" class="form-control" id="id_description" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_payment_method" class="form-label">支付方式</label>
+                        <select name="payment_method" class="form-select" id="id_payment_method" required>
+                            <option value="">请选择支付方式</option>
+                            {% for value, label in form.payment_method.field.choices %}
+                            <option value="{{ value }}" {% if form.payment_method.value == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_order_number" class="form-label">订单编号 (可选)</label>
+                        <input type="text" name="order_number" class="form-control" id="id_order_number">
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">提交</button>
+                        <button type="submit" class="btn btn-success" name="continue" value="true">提交并继续记账</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 检查URL参数，如果需要打开模态框则自动打开
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('open_modal') === 'true') {
+            const recordModal = new bootstrap.Modal(document.getElementById('recordModal'));
+            recordModal.show();
         }
-        .main-container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
-            max-width: 800px;
-            margin: 40px auto;
-        }
-        .action-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin: 20px 0;
-        }
-        .recent-transactions {
-            margin-top: 30px;
-        }
-    </style>
-</head>
-<body>
-    <div class="main-container">
-        <h1 class="text-center mb-4">记账簿</h1>
+    });
+</script>
+
+<!-- 快捷记账的JS -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 从localStorage获取快捷操作
+        const quickActions = JSON.parse(localStorage.getItem('quickActions') || '[]');
+        const container = document.getElementById('quickActionButtons');
         
-        <div class="action-buttons">
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#recordModal">
-                记一笔
-            </button>
-            <a href="{% url 'import_excel' %}" class="btn btn-secondary">批量导入</a>
-            <a href="{% url 'query_transactions' %}" class="btn btn-info">统计查询</a>
-            <a href="{% url 'admin:index' %}" class="btn btn-dark">后台管理</a>
-        </div>
-
-        <!-- 最近记录展示区域 -->
-        <div class="recent-transactions">
-            <h3>最近记录</h3>
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>日期</th>
-                            <th>金额</th>
-                            <th>类别</th>
-                            <th>描述</th>
-                            <th>支付方式</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for transaction in recent_transactions %}
-                        <tr>
-                            <td>{{ transaction.transaction_date }}</td>
-                            <td>{{ transaction.amount }}</td>
-                            <td>{{ transaction.get_category_code_display }}</td>
-                            <td>{{ transaction.description }}</td>
-                            <td>{{ transaction.get_payment_method_display }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal -->
-    <div class="modal fade" id="recordModal" tabindex="-1" aria-labelledby="recordModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="recordModalLabel">记一笔</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    {% include "record.html" %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // 检查URL参数是否需要打开模态框
-        document.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('open_modal') === 'true') {
-                const modal = new bootstrap.Modal(document.getElementById('recordModal'));
-                modal.show();
+        // 渲染快捷按钮
+        function renderQuickActions() {
+            container.innerHTML = '';
+            
+            if (quickActions.length === 0) {
+                container.innerHTML = '<div class="col-12 text-center text-muted py-3">暂无快捷记账，点击"编辑"添加</div>';
+                return;
             }
+            
+            quickActions.forEach((action, index) => {
+                const col = document.createElement('div');
+                col.className = 'col-6 col-md-4 col-lg-3 mb-3';
+                
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-outline-secondary w-100 h-100 py-3';
+                btn.type = 'button';
+                btn.dataset.index = index;
+                btn.onclick = function() { useQuickAction(index); };
+                
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-tag mb-2';
+                
+                const title = document.createElement('div');
+                title.className = 'fw-bold';
+                title.textContent = action.description;
+                
+                const details = document.createElement('div');
+                details.className = 'small text-muted';
+                details.textContent = `¥${action.amount} · ${action.categoryName}`;
+                
+                btn.appendChild(icon);
+                btn.appendChild(title);
+                btn.appendChild(details);
+                col.appendChild(btn);
+                container.appendChild(col);
+            });
+        }
+        
+        // 使用快捷记账
+        function useQuickAction(index) {
+            const action = quickActions[index];
+            
+            // 填充表单
+            document.getElementById('id_transaction_date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('id_amount').value = action.amount;
+            document.getElementById('id_category_code').value = action.category;
+            document.getElementById('id_description').value = action.description;
+            document.getElementById('id_payment_method').value = action.payment;
+            
+            // 打开模态框
+            const modal = new bootstrap.Modal(document.getElementById('recordModal'));
+            modal.show();
+        }
+        
+        // 编辑快捷操作
+        document.getElementById('editQuickActions').addEventListener('click', function() {
+            // 这里可以打开一个编辑模态框
+            // 简化起见，我们直接从最近的交易中添加
+            const recentTransactions = Array.from(document.querySelectorAll('table tbody tr')).slice(0, 5);
+            
+            if (recentTransactions.length === 0) {
+                alert('没有最近的交易记录可添加为快捷记账');
+                return;
+            }
+            
+            const newActions = [];
+            recentTransactions.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 5) {
+                    const amount = cells[1].textContent.replace(/[^0-9.-]+/g, '');
+                    const category = cells[2].textContent.trim();
+                    const description = cells[3].textContent.trim();
+                    const payment = cells[4].textContent.trim();
+                    
+                    // 获取类别代码和支付方式代码
+                    const categoryCode = getCategoryCode(category);
+                    const paymentCode = getPaymentCode(payment);
+                    
+                    newActions.push({
+                        amount: amount,
+                        category: categoryCode,
+                        categoryName: category,
+                        description: description,
+                        payment: paymentCode,
+                        paymentName: payment
+                    });
+                }
+            });
+            
+            // 更新快捷操作
+            localStorage.setItem('quickActions', JSON.stringify(newActions));
+            quickActions.length = 0;
+            newActions.forEach(a => quickActions.push(a));
+            
+            // 重新渲染
+            renderQuickActions();
+            alert('已从最近交易添加快捷记账');
         });
-    </script>
-</body>
-</html>
+        
+        // 辅助函数：根据类别名称获取代码
+        function getCategoryCode(name) {
+            const categoryMap = {
+                {% for code, label in form.category_code.field.choices %}
+                "{{ label }}": "{{ code }}",
+                {% endfor %}
+            };
+            return categoryMap[name] || "A";
+        }
+        
+        // 辅助函数：根据支付方式名称获取代码
+        function getPaymentCode(name) {
+            const paymentMap = {
+                {% for code, label in form.payment_method.field.choices %}
+                "{{ label }}": "{{ code }}",
+                {% endfor %}
+            };
+            return paymentMap[name] || "WCP";
+        }
+        
+        // 初始渲染
+        renderQuickActions();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'budget_list' %}" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left"></i> 返回预算列表
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="id_category_code" class="form-label">类别</label>
+                        {{ form.category_code }}
+                        {% if form.category_code.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.category_code.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_amount" class="form-label">预算金额</label>
+                        <div class="input-group">
+                            <span class="input-group-text">¥</span>
+                            {{ form.amount }}
+                        </div>
+                        {% if form.amount.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.amount.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_period" class="form-label">预算周期</label>
+                        {{ form.period }}
+                        {% if form.period.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.period.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_start_date" class="form-label">开始日期</label>
+                        {{ form.start_date }}
+                        {% if form.start_date.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.start_date.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_end_date" class="form-label">结束日期 (可选)</label>
+                        {{ form.end_date }}
+                        <div class="form-text">如不设置结束日期，预算将持续有效</div>
+                        {% if form.end_date.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.end_date.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

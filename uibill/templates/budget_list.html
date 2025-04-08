@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}预算管理{% endblock %}
+
+{% block page_title %}预算管理{% endblock %}
+
+{% block header_actions %}
+<div class="d-flex gap-2">
+    <a href="{% url 'add_budget' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> 添加预算
+    </a>
+    <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> 返回首页
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body p-0">
+        {% if budgets %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>类别</th>
+                        <th>预算金额</th>
+                        <th>周期</th>
+                        <th>已使用</th>
+                        <th>剩余</th>
+                        <th>使用进度</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for budget in budgets %}
+                    <tr>
+                        <td>{{ budget.get_category_code_display }}</td>
+                        <td>¥{{ budget.amount|floatformat:2 }}</td>
+                        <td>{{ budget.get_period_display }}</td>
+                        <td>¥{{ budget.spent|floatformat:2 }}</td>
+                        <td class="{% if budget.remaining < 0 %}text-danger{% endif %}">
+                            ¥{{ budget.remaining|floatformat:2 }}
+                        </td>
+                        <td>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar {% if budget.percentage >= 100 %}bg-danger{% elif budget.percentage >= 80 %}bg-warning{% else %}bg-success{% endif %}" 
+                                     role="progressbar" 
+                                     style="width: {{ budget.percentage }}%;" 
+                                     aria-valuenow="{{ budget.percentage }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                            <small class="text-muted">{{ budget.percentage }}%</small>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'edit_budget' budget.id %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'delete_budget' budget.id %}" class="btn btn-outline-danger">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <p class="text-muted mb-3">暂无预算设置</p>
+            <a href="{% url 'add_budget' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> 添加预算
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
