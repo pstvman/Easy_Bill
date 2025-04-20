@@ -25,7 +25,7 @@ class TransactionQueryForm(forms.Form):
     CATEGORY_CHOICES = [('', '所有')] + list(Transaction.CATEGORY_CHOICES)
     
     DATE_RANGE_CHOICES = [
-        ('', '选择时间范围'),
+        ('', '所有日期'),
         ('7days', '最近7天'),
         ('15days', '最近15天'),
         ('this_month', '本月'),
@@ -50,7 +50,8 @@ class TransactionQueryForm(forms.Form):
     date_range = forms.ChoiceField(
         choices=DATE_RANGE_CHOICES,
         required=False,
-        label='时间范围'
+        label='时间范围',
+        initial='this_year'
     )
     start_date = forms.DateField(
         required=False,

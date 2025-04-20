@@ -175,6 +175,10 @@ def download_template(request):
     return response
 
 def query_transactions(request):
+    # 添加默认的时间范围
+    if not request.GET:
+        return redirect(f"{request.path}?date_range=this_year")
+
     form = TransactionQueryForm(request.GET)
     transactions = Transaction.objects.all()
     
