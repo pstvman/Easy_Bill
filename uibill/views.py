@@ -70,32 +70,35 @@ def add_transaction(request):
         form = TransactionForm(request.POST)
         if form.is_valid():
             transaction = form.save()
-            messages.success(request, '交易记录已成功保存！')
             
-            # 保存上一次提交的数据到session
-            request.session['transaction_data'] = {
-                'transaction_date': request.POST.get('transaction_date'),
-                'category': request.POST.get('category_code'),
-                'payment': request.POST.get('payment_method'),
-            }
+            # 检查是否是AJAX请求
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'id': transaction.id
+                })
             
-            if request.POST.get('continue') == 'true':
-                return render(request, 'success.html', {'continue_recording': True})
-            return render(request, 'success.html', {'continue_recording': False})
-
+            # 检查是否需要继续添加
+            if 'continue' in request.POST:
+                messages.success(request, '交易记录已添加！')
+                return redirect(f"{reverse('home')}?open_modal=true")
+            
+            # 普通提交也添加成功消息
+            messages.success(request, '交易记录已添加！')
+            return redirect('home')
+        else:
+            # 如果是AJAX请求，返回错误信息
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                errors = {field: str(error[0]) for field, error in form.errors.items()}
+                return JsonResponse({
+                    'success': False,
+                    'error': '表单验证失败',
+                    'errors': errors
+                })
     else:
-        transaction_data = request.session.get('transaction_data', {})
-        initial_data = {
-            'transaction_date': transaction_data.get('transaction_date'),
-            'category_code': transaction_data.get('category'),
-            'payment_method': transaction_data.get('payment'),
-        }
-        form = TransactionForm(initial=initial_data)
+        form = TransactionForm(initial={'transaction_date': timezone.now().date()})
     
-    return render(request, 'record.html', {
-        'form': form,
-        'transaction_data': request.session.get('transaction_data', {})
-    })
+    return render(request, 'add_transaction.html', {'form': form})
 
 def success_view(request):
     # 如果是从iframe中访问的，返回success.html
@@ -153,6 +156,7 @@ def import_excel(request):
     return render(request, 'import_excel.html')
 
 def download_template(request):
+    """下载Excel导入模板"""
     # 创建示例数据
     data = {
         'transaction_date': ['2024-04-17'],

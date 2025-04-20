@@ -135,6 +135,9 @@
     </div>
 </div>
 
+<!-- 在页面顶部添加消息显示区域 -->
+<div id="message-container" class="position-fixed top-0 start-50 translate-middle-x" style="z-index: 9999; margin-top: 10px;"></div>
+
 <!-- 记账模态框 -->
 <div class="modal fade" id="recordModal" tabindex="-1" aria-labelledby="recordModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -191,8 +194,8 @@
                     </div>
                     
                     <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary">提交</button>
-                        <button type="submit" class="btn btn-success" name="continue" value="true">提交并继续记账</button>
+                        <button type="button" class="btn btn-primary" id="submitBtn">提交</button>
+                        <button type="button" class="btn btn-success" id="submitContinueBtn">提交并继续</button>
                     </div>
                 </form>
             </div>
@@ -207,6 +210,127 @@
         if (urlParams.get('open_modal') === 'true') {
             const recordModal = new bootstrap.Modal(document.getElementById('recordModal'));
             recordModal.show();
+        }
+        
+        // 添加CSS样式到head
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes floatUp {
+                0% { opacity: 1; transform: translateY(0); }
+                80% { opacity: 0.7; transform: translateY(-20px); }
+                100% { opacity: 0; transform: translateY(-30px); }
+            }
+            .message-float-up {
+                animation: floatUp 2s ease-out forwards;
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // 显示消息函数
+        function showMessage(message, type = 'success') {
+            const messageContainer = document.getElementById('message-container');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.style.transition = 'all 0.5s ease';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            messageContainer.appendChild(alertDiv);
+            
+            // 1秒后开始浮动动画
+            setTimeout(() => {
+                alertDiv.classList.add('message-float-up');
+            }, 1000);
+            
+            // 3秒后移除元素
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+        
+        // 处理表单提交
+        const form = document.getElementById('transactionForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const submitContinueBtn = document.getElementById('submitContinueBtn');
+        
+        // 普通提交按钮
+        if (submitBtn && form) {
+            submitBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // 创建FormData对象
+                const formData = new FormData(form);
+                
+                // 发送AJAX请求
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 显示成功消息
+                        showMessage('成功! 交易记录已添加。');
+                        
+                        // 延迟关闭模态框并刷新页面
+                        setTimeout(() => {
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('recordModal'));
+                            modal.hide();
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        showMessage('添加失败: ' + (data.error || '未知错误'), 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showMessage('提交时发生错误，请重试', 'danger');
+                });
+            });
+        }
+        
+        // 提交并继续记账按钮
+        if (submitContinueBtn && form) {
+            submitContinueBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // 创建FormData对象
+                const formData = new FormData(form);
+                formData.append('continue', 'true');
+                
+                // 发送AJAX请求
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 清空表单，保留日期
+                        const currentDate = document.getElementById('id_transaction_date').value;
+                        document.getElementById('id_amount').value = '';
+                        document.getElementById('id_description').value = '';
+                        document.getElementById('id_order_number').value = '';
+                        document.getElementById('id_transaction_date').value = currentDate;
+                        
+                        // 显示成功消息在模态框外部
+                        showMessage('成功! 交易记录已添加。');
+                    } else {
+                        showMessage('添加失败: ' + (data.error || '未知错误'), 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showMessage('提交时发生错误，请重试', 'danger');
+                });
+            });
         }
     });
 </script>
