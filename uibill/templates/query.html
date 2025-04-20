@@ -30,13 +30,13 @@
             </div>
 
             <div class="col-12 d-flex justify-content-between">
-                <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                <!-- <a href="{% url 'home' %}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left"></i> 返回首页
+                </a> -->
+                <a href="{% url 'export_transactions' %}?{{ request.GET.urlencode }}" class="btn btn-success me-2">
+                    <i class="fas fa-file-export"></i> 导出Excel
                 </a>
                 <div>
-                    <a href="{% url 'export_transactions' %}?{{ request.GET.urlencode }}" class="btn btn-success me-2">
-                        <i class="fas fa-file-export"></i> 导出Excel
-                    </a>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-search"></i> 查询
                     </button>
@@ -46,28 +46,36 @@
     </div>
 </div>
 
-<!-- 图表展示 -->
-<div class="row mb-4">
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header">
-                <h5 class="mb-0">类别支出统计</h5>
-            </div>
-            <div class="card-body">
-                <div class="chart-container">
+<!-- 图表展示 - 使用选项卡 -->
+<div class="card mb-4">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs" id="chartTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="category-tab" data-bs-toggle="tab" data-bs-target="#category-chart" type="button" role="tab">类别分布</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="monthly-tab" data-bs-toggle="tab" data-bs-target="#monthly-chart" type="button" role="tab">月度趋势</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="payment-tab" data-bs-toggle="tab" data-bs-target="#payment-chart" type="button" role="tab">支付方式</button>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body">
+        <div class="tab-content" id="chartTabsContent">
+            <div class="tab-pane fade show active" id="category-chart" role="tabpanel">
+                <div class="chart-container" style="height: 300px;">
                     <canvas id="categoryChart"></canvas>
                 </div>
             </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header">
-                <h5 class="mb-0">月度收支趋势</h5>
-            </div>
-            <div class="card-body">
-                <div class="chart-container">
+            <div class="tab-pane fade" id="monthly-chart" role="tabpanel">
+                <div class="chart-container" style="height: 300px;">
                     <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="payment-chart" role="tabpanel">
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="paymentChart"></canvas>
                 </div>
             </div>
         </div>
@@ -131,11 +139,24 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
 {% block extra_js %}
 <script>
-    // 解析JSON数据
-    const chartData = JSON.parse('{{ chart_data_json|safe }}');
+    // 添加错误处理
+    let chartData;
+    try {
+        chartData = JSON.parse('{{ chart_data_json|safe }}');
+        console.log("图表数据:", chartData);
+    } catch (error) {
+        console.error("图表数据解析错误:", error);
+        // 提供默认数据结构以防解析失败
+        chartData = {
+            categories: { labels: [], data: [] },
+            monthly: { labels: [], expense_data: [], income_data: [] },
+            payments: { labels: [], data: [] }
+        };
+    }
     
     // 颜色配置
     const colors = {
@@ -150,187 +171,158 @@
         incomeBorder: '#2ecc71'
     };
     
-    // 类别支出图表
-    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-    new Chart(categoryCtx, {
-        type: 'doughnut',
-        data: {
-            labels: chartData.categories.labels,
-            datasets: [{
-                data: chartData.categories.data,
-                backgroundColor: colors.primary,
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'right',
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = context.raw || 0;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = Math.round((value / total) * 100);
-                            return `${label}: ¥${value.toFixed(2)} (${percentage}%)`;
-                        }
-                    }
-                }
-            }
-        }
-    });
-    
-    // 月度收支趋势图表
-    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
-    new Chart(monthlyCtx, {
-        type: 'line',
-        data: {
-            labels: chartData.monthly.labels,
-            datasets: [
-                {
-                    label: '支出',
-                    data: chartData.monthly.expense_data,
-                    borderColor: colors.expenseBorder,
-                    backgroundColor: colors.expense,
-                    fill: true,
-                    tension: 0.4
-                },
-                {
-                    label: '收入',
-                    data: chartData.monthly.income_data,
-                    borderColor: colors.incomeBorder,
-                    backgroundColor: colors.income,
-                    fill: true,
-                    tension: 0.4
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return '¥' + value;
-                        }
-                    }
-                }
-            },
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.dataset.label || '';
-                            const value = context.raw || 0;
-                            return `${label}: ¥${value.toFixed(2)}`;
-                        }
-                    }
-                }
-            }
-        }
-    });
-    
-    // 支付方式图表
-    const paymentCtx = document.getElementById('paymentChart').getContext('2d');
-    new Chart(paymentCtx, {
-        type: 'bar',
-        data: {
-            labels: chartData.payments.labels,
-            datasets: [{
-                label: '支出金额',
-                data: chartData.payments.data,
-                backgroundColor: colors.primary,
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return '¥' + value;
-                        }
-                    }
-                }
-            },
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.dataset.label || '';
-                            const value = context.raw || 0;
-                            return `${label}: ¥${value.toFixed(2)}`;
-                        }
-                    }
-                }
-            }
-        }
-    });
-    
-    // 显示/隐藏自定义日期范围
     document.addEventListener('DOMContentLoaded', function() {
+        // 类别支出图表
+        const categoryCtx = document.getElementById('categoryChart');
+        if (categoryCtx) {
+            new Chart(categoryCtx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: chartData.categories.labels,
+                    datasets: [{
+                        data: chartData.categories.data,
+                        backgroundColor: colors.primary,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                    return `${label}: ¥${value.toFixed(2)} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 月度收支趋势图表
+        const monthlyCtx = document.getElementById('monthlyChart');
+        if (monthlyCtx) {
+            new Chart(monthlyCtx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: chartData.monthly.labels,
+                    datasets: [
+                        {
+                            label: '支出',
+                            data: chartData.monthly.expense_data,
+                            borderColor: colors.expenseBorder,
+                            backgroundColor: colors.expense,
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: '收入',
+                            data: chartData.monthly.income_data,
+                            borderColor: colors.incomeBorder,
+                            backgroundColor: colors.income,
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '¥' + value;
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const value = context.raw || 0;
+                                    return `${label}: ¥${value.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 支付方式图表
+        const paymentCtx = document.getElementById('paymentChart');
+        if (paymentCtx) {
+            new Chart(paymentCtx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: chartData.payments.labels,
+                    datasets: [{
+                        label: '支出金额',
+                        data: chartData.payments.data,
+                        backgroundColor: colors.primary,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '¥' + value;
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const value = context.raw || 0;
+                                    return `${label}: ¥${value.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 显示/隐藏自定义日期范围
         const dateRangeSelect = document.querySelector('[name="date_range"]');
         const customDateFields = document.getElementById('custom-date-fields');
         
-        function toggleCustomDateFields() {
-            if (dateRangeSelect.value === 'custom') {
-                customDateFields.classList.remove('d-none');
-            } else {
-                customDateFields.classList.add('d-none');
+        if (dateRangeSelect && customDateFields) {
+            function toggleCustomDateFields() {
+                if (dateRangeSelect.value === 'custom') {
+                    customDateFields.classList.remove('d-none');
+                } else {
+                    customDateFields.classList.add('d-none');
+                }
             }
+            
+            // 初始化
+            toggleCustomDateFields();
+            
+            // 监听变化
+            dateRangeSelect.addEventListener('change', toggleCustomDateFields);
         }
-        
-        // 初始化
-        toggleCustomDateFields();
-        
-        // 监听变化
-        dateRangeSelect.addEventListener('change', toggleCustomDateFields);
     });
 </script>
 {% endblock %}
-{% endblock %}
-
-<!-- 在图表部分添加选项卡 -->
-<div class="card mb-4">
-    <div class="card-header">
-        <ul class="nav nav-tabs card-header-tabs" id="chartTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="category-tab" data-bs-toggle="tab" data-bs-target="#category-chart" type="button" role="tab">类别分布</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="monthly-tab" data-bs-toggle="tab" data-bs-target="#monthly-chart" type="button" role="tab">月度趋势</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="payment-tab" data-bs-toggle="tab" data-bs-target="#payment-chart" type="button" role="tab">支付方式</button>
-            </li>
-        </ul>
-    </div>
-    <div class="card-body">
-        <div class="tab-content" id="chartTabsContent">
-            <div class="tab-pane fade show active" id="category-chart" role="tabpanel">
-                <div class="chart-container">
-                    <canvas id="categoryChart"></canvas>
-                </div>
-            </div>
-            <div class="tab-pane fade" id="monthly-chart" role="tabpanel">
-                <div class="chart-container">
-                    <canvas id="monthlyChart"></canvas>
-                </div>
-            </div>
-            <div class="tab-pane fade" id="payment-chart" role="tabpanel">
-                <div class="chart-container">
-                    <canvas id="paymentChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
