@@ -39,10 +39,14 @@ def home(request):
     ).aggregate(
         total=Sum('amount')
     )['total'] or 0
+
+    # 格式化
+    monthly_expense = round(monthly_expense, 2)
+    monthly_income = round(monthly_income, 2)
     
     # 计算本月结余
     monthly_balance = monthly_income - monthly_expense
-    
+
     # 从session获取上次的数据
     transaction_data = request.session.get('transaction_data', {})
     initial_data = {

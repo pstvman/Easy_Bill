@@ -135,7 +135,7 @@
 {% block extra_js %}
 <script>
     // 解析JSON数据
-    const chartData = {{ chart_data_json|safe }};
+    const chartData = JSON.parse('{{ chart_data_json|safe }}');
     
     // 颜色配置
     const colors = {
