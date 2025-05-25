@@ -13,7 +13,7 @@ call conda activate %ENV_NAME%
 
 :: 运行项目
 echo 启动 Flask 应用...
-python manage.py runserver
+python manage.py runserver 127.0.0.1:50000
 
 :: 如果程序异常退出，暂停显示错误信息
 if errorlevel 1 (
