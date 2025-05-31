@@ -18,7 +18,7 @@ def main():
     
     # 如果是runserver命令且没有指定端口，则使用高端口并绑定到所有网络接口
     if len(sys.argv) > 1 and sys.argv[1] == 'runserver' and len(sys.argv) == 2:
-        sys.argv.append('0.0.0.0:50000')
+        sys.argv.append('0.0.0.0:18527')
     
     execute_from_command_line(sys.argv)
 
